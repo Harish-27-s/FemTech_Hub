@@ -133,28 +133,7 @@ io.on('connection', (socket) => {
 });
 
 // ── Start Server ─────────────────────────────────────────────────────────────
-const PORT = process.env.PORT || 3000;
-httpServer.listen(PORT, '0.0.0.0', () => {
-  // Initialize DB on startup
-  getDB();
-  console.log('');
-  console.log('╔════════════════════════════════════════════════╗');
-  console.log('║   💜  FemTech Hub Server – ONLINE              ║');
-  console.log(`║   🌐  http://0.0.0.0:${PORT}                      ║`);
-  console.log('║   📡  Socket.IO ready for real-time events     ║');
-  console.log('╚════════════════════════════════════════════════╝');
-  console.log('');
-  console.log('Endpoints:');
-  console.log(`  POST /api/auth/signup`);
-  console.log(`  POST /api/auth/login`);
-  console.log(`  POST /api/safety/sos`);
-  console.log(`  POST /api/health/cycle`);
-  console.log(`  GET  /api/health/analysis`);
-  console.log(`  POST /api/wellness/mood`);
-  console.log(`  GET  /api/wellness/analysis`);
-  console.log(`  GET  /api/community/posts`);
-  console.log(`  POST /api/community/post`);
-  console.log('');
-  console.log('💡 Find your local IP with: ipconfig (Windows) or ifconfig (Mac/Linux)');
-  console.log('   Then update SERVER_URL in Flutter api_service.dart');
+const PORT = process.env.PORT || 5000; // Use Render's port or 5000 locally
+http.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on port ${PORT}`);
 });
