@@ -21,7 +21,10 @@ const httpServer = http.createServer(app);
 
 // ── Socket.IO Setup ──────────────────────────────────────────────────────────
 const io = new Server(httpServer, {
-  cors: { origin: '*', methods: ['GET', 'POST'] },
+  cors: { 
+    origin: '*', 
+    methods: ['GET', 'POST'] 
+  },
   pingTimeout: 60000,
 });
 
@@ -50,7 +53,6 @@ const JWT_SECRET = process.env.JWT_SECRET || 'femtech_hub_secret_2024';
 const connectedUsers = new Map();
 
 io.use((socket, next) => {
-  // Optional auth for socket connections
   const token = socket.handshake.auth?.token;
   if (token) {
     try {
@@ -65,7 +67,6 @@ io.use((socket, next) => {
 io.on('connection', (socket) => {
   console.log(`🔌 Client connected: ${socket.id} (${socket.user?.name || 'guest'})`);
 
-  // Announce user joined
   if (socket.user) {
     connectedUsers.set(socket.id, { userId: socket.user.id, name: socket.user.name });
     io.emit('user_online', {
@@ -75,33 +76,21 @@ io.on('connection', (socket) => {
     });
   }
 
-  // ── WALK WITH ME: Live location sharing ──────────────────────────────────
-  // Client emits their GPS location every ~5 seconds
   socket.on('location_update', (data) => {
-    // data = { userId, latitude, longitude, sharingWith: [userId] or 'all' }
     const payload = {
       ...data,
       socketId: socket.id,
       name: socket.user?.name || 'Unknown',
       timestamp: new Date().toISOString(),
     };
-
     if (data.sharingWith === 'all') {
-      // Broadcast to everyone except sender
       socket.broadcast.emit('location_receive', payload);
-    } else if (Array.isArray(data.sharingWith)) {
-      // Targeted sharing – in a real app you'd track socket IDs per user
-      // For demo, broadcast to room or all
+    } else {
       socket.broadcast.emit('location_receive', payload);
     }
-
-    // Also save to DB (throttled – only every 30s via REST; live updates are socket-only)
   });
 
-  // ── COMMUNITY: Client sends a post via socket ─────────────────────────────
   socket.on('new_post', (data) => {
-    // data = { content, anonymous, token }
-    // Broadcast to all (server already saves via REST; this is for live updates)
     io.emit('receive_post', {
       ...data,
       author_name: data.anonymous ? 'Anonymous' : socket.user?.name || 'Unknown',
@@ -109,7 +98,6 @@ io.on('connection', (socket) => {
     });
   });
 
-  // ── SOS via Socket (direct emit, REST also does this) ────────────────────
   socket.on('sos_trigger', (data) => {
     io.emit('sos_alert', {
       ...data,
@@ -121,7 +109,6 @@ io.on('connection', (socket) => {
     console.log(`🚨 SOS triggered by ${socket.user?.name} at ${data.latitude}, ${data.longitude}`);
   });
 
-  // ── Disconnect ─────────────────────────────────────────────────────────────
   socket.on('disconnect', () => {
     connectedUsers.delete(socket.id);
     io.emit('user_offline', {
@@ -133,7 +120,10 @@ io.on('connection', (socket) => {
 });
 
 // ── Start Server ─────────────────────────────────────────────────────────────
-const PORT = process.env.PORT || 5000; // Use Render's port or 5000 locally
-http.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on port ${PORT}`);
+// 🛠️ RENDER FIX: Must use process.env.PORT and bind to 0.0.0.0
+const PORT = process.env.PORT || 3000; 
+
+httpServer.listen(PORT, '0.0.0.0', () => {
+  getDB(); // Initialize DB on startup
+  console.log('🚀 FemTech Hub Server – ONLINE on Port ' + PORT);
 });
